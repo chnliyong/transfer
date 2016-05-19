@@ -1,9 +1,9 @@
 package http
 
 import (
-	cutils "github.com/open-falcon/common/utils"
-	"github.com/open-falcon/transfer/proc"
-	"github.com/open-falcon/transfer/sender"
+	cutils "github.com/chnliyong/common/utils"
+	"github.com/chnliyong/transfer/proc"
+	"github.com/chnliyong/transfer/sender"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,11 +31,10 @@ func configProcHttpRoutes() {
 		args := strings.Split(urlParam, "/")
 
 		argsLen := len(args)
-		endpoint := args[0]
-		metric := args[1]
+		name := args[0]
 		tags := make(map[string]string)
-		if argsLen > 2 {
-			tagVals := strings.Split(args[2], ",")
+		if argsLen > 1 {
+			tagVals := strings.Split(args[1], ",")
 			for _, tag := range tagVals {
 				tagPairs := strings.Split(tag, "=")
 				if len(tagPairs) == 2 {
@@ -43,7 +42,7 @@ func configProcHttpRoutes() {
 				}
 			}
 		}
-		proc.RecvDataTrace.SetPK(cutils.PK(endpoint, metric, tags))
+		proc.RecvDataTrace.SetPK(cutils.PK(name, tags))
 		RenderDataJson(w, proc.RecvDataTrace.GetAllTraced())
 	})
 
@@ -53,8 +52,8 @@ func configProcHttpRoutes() {
 		args := strings.Split(urlParam, "/")
 
 		argsLen := len(args)
-		endpoint := args[0]
-		metric := args[1]
+		name := args[0]
+		//field := args[1]
 		opt := args[2]
 
 		threadholdStr := args[3]
@@ -75,7 +74,7 @@ func configProcHttpRoutes() {
 			}
 		}
 
-		err = proc.RecvDataFilter.SetFilter(cutils.PK(endpoint, metric, tags), opt, threadhold)
+		err = proc.RecvDataFilter.SetFilter(cutils.PK(name, tags), opt, threadhold)
 		if err != nil {
 			RenderDataJson(w, err.Error())
 			return

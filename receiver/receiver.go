@@ -1,11 +1,9 @@
 package receiver
 
 import (
-	"github.com/open-falcon/transfer/receiver/rpc"
-	"github.com/open-falcon/transfer/receiver/socket"
+	"github.com/chnliyong/transfer/receiver/rpc"
 )
 
 func Start() {
 	go rpc.StartRpc()
-	go socket.StartSocket()
 }

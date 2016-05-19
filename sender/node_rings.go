@@ -1,7 +1,7 @@
 package sender
 
 import (
-	"github.com/open-falcon/transfer/g"
+	"github.com/chnliyong/transfer/g"
 	"stathat.com/c/consistent"
 )
 
@@ -9,7 +9,6 @@ func initNodeRings() {
 	cfg := g.Config()
 
 	JudgeNodeRing = newConsistentHashNodesRing(cfg.Judge.Replicas, KeysOfMap(cfg.Judge.Cluster))
-	GraphNodeRing = newConsistentHashNodesRing(cfg.Graph.Replicas, KeysOfMap(cfg.Graph.Cluster))
 }
 
 // TODO 考虑放到公共组件库,或utils库

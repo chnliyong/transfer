@@ -2,7 +2,7 @@ package http
 
 import (
 	"fmt"
-	"github.com/open-falcon/transfer/sender"
+	"github.com/chnliyong/transfer/sender"
 	"net/http"
 	"strings"
 )
@@ -24,8 +24,6 @@ func configDebugHttpRoutes() {
 		switch receiver {
 		case "judge":
 			result = strings.Join(sender.JudgeConnPools.Proc(), "\n")
-		case "graph":
-			result = strings.Join(sender.GraphConnPools.Proc(), "\n")
 		default:
 			result = fmt.Sprintf("bad args, module not exist\n")
 		}

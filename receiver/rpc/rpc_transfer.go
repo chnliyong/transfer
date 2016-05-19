@@ -2,12 +2,11 @@ package rpc
 
 import (
 	"fmt"
-	cmodel "github.com/open-falcon/common/model"
-	cutils "github.com/open-falcon/common/utils"
-	"github.com/open-falcon/transfer/g"
-	"github.com/open-falcon/transfer/proc"
-	"github.com/open-falcon/transfer/sender"
-	"strconv"
+	cmodel "github.com/chnliyong/common/model"
+	cutils "github.com/chnliyong/common/utils"
+	"github.com/chnliyong/transfer/g"
+	"github.com/chnliyong/transfer/proc"
+	"github.com/chnliyong/transfer/sender"
 	"time"
 )
 
@@ -49,34 +48,17 @@ func RecvMetricValues(args []*cmodel.MetricValue, reply *cmodel.TransferResponse
 			continue
 		}
 
-		// 历史遗留问题.
-		// 老版本agent上报的metric=kernel.hostname的数据,其取值为string类型,现在已经不支持了;所以,这里硬编码过滤掉
-		if v.Metric == "kernel.hostname" {
+		if v.Name == "" || v.Tags == nil || v.Tags["host"] == "" || len(v.Tags) > 20 {
 			reply.Invalid += 1
 			continue
 		}
 
-		if v.Metric == "" || v.Endpoint == "" {
+		if v.Fields == nil {
 			reply.Invalid += 1
 			continue
 		}
 
-		if v.Type != g.COUNTER && v.Type != g.GAUGE && v.Type != g.DERIVE {
-			reply.Invalid += 1
-			continue
-		}
-
-		if v.Value == "" {
-			reply.Invalid += 1
-			continue
-		}
-
-		if v.Step <= 0 {
-			reply.Invalid += 1
-			continue
-		}
-
-		if len(v.Metric)+len(v.Tags) > 510 {
+		if len(v.Name)+len(cutils.SortedTags(v.Tags)) > 510 {
 			reply.Invalid += 1
 			continue
 		}
@@ -88,38 +70,12 @@ func RecvMetricValues(args []*cmodel.MetricValue, reply *cmodel.TransferResponse
 		}
 
 		fv := &cmodel.MetaData{
-			Metric:      v.Metric,
-			Endpoint:    v.Endpoint,
-			Timestamp:   v.Timestamp,
-			Step:        v.Step,
-			CounterType: v.Type,
-			Tags:        cutils.DictedTagstring(v.Tags), //TODO tags键值对的个数,要做一下限制
+			Name:      v.Name,
+			Fields:    v.Fields,
+			Timestamp: v.Timestamp,
+			Tags:      v.Tags,
 		}
 
-		valid := true
-		var vv float64
-		var err error
-
-		switch cv := v.Value.(type) {
-		case string:
-			vv, err = strconv.ParseFloat(cv, 64)
-			if err != nil {
-				valid = false
-			}
-		case float64:
-			vv = cv
-		case int64:
-			vv = float64(cv)
-		default:
-			valid = false
-		}
-
-		if !valid {
-			reply.Invalid += 1
-			continue
-		}
-
-		fv.Value = vv
 		items = append(items, fv)
 	}
 
@@ -134,16 +90,8 @@ func RecvMetricValues(args []*cmodel.MetricValue, reply *cmodel.TransferResponse
 
 	cfg := g.Config()
 
-	if cfg.Graph.Enabled {
-		sender.Push2GraphSendQueue(items)
-	}
-
 	if cfg.Judge.Enabled {
 		sender.Push2JudgeSendQueue(items)
-	}
-
-	if cfg.Tsdb.Enabled {
-		sender.Push2TsdbSendQueue(items)
 	}
 
 	reply.Message = "ok"
